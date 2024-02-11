@@ -101,7 +101,6 @@ class Runner:
 
     def init_wandb(self):
         # replace with your own wandb key
-        os.environ['WANDB_API_KEY'] = "45c5299c29cdd6b3159ce61b98e1a08cca7401cb"
         wandb_config = {keys: value for keys, value in self.args.__dict__.items()}
         wandb.init(project='ssd_prosocial_baseline', name=self.args.exp_name, config=wandb_config)
 
