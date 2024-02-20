@@ -7,9 +7,19 @@ from torch.distributions import Categorical
 from torch.utils.data.sampler import BatchSampler, SequentialSampler
 
 
-def orthogonal_init(layer, gain=1.0):
-    nn.init.orthogonal_(layer.weight, gain=gain)
-    nn.init.constant_(layer.bias, 0)
+def orthogonal_init(m):
+    if isinstance(m, nn.Conv2d) or isinstance(m, nn.Linear):
+        nn.init.orthogonal_(m.weight)
+        if m.bias is not None:
+            nn.init.constant_(m.bias, 0)
+    elif isinstance(m, nn.GRUCell):
+        for name, param in m.named_parameters():
+            if 'weight_ih' in name:
+                nn.init.orthogonal_(param.data)
+            elif 'weight_hh' in name:
+                nn.init.orthogonal_(param.data)
+            elif 'bias' in name:
+                param.data.fill_(0)
 
 
 def conv2d_size_out(size, kernel_size=3, stride=1, padding=0):
@@ -156,7 +166,7 @@ class PPO_discrete:
     def __init__(self, args):
         self.args = args
         self.use_rnn = args.use_rnn
-        self.batch_size = args.batch_size * args.env_parallel_num   # batch size = episode_num * env_parallel_num
+        self.batch_size = args.batch_size * args.env_parallel_num  # batch size = episode_num * env_parallel_num
         self.mini_batch_size = args.mini_batch_size * args.env_parallel_num
         self.train_inner_steps = args.train_inner_steps
         self.train_episode = args.train_episode
@@ -182,6 +192,9 @@ class PPO_discrete:
                 self.actor_critic = ActorCriticTwoLayerRNN(args).to(self.device)
             else:
                 self.actor_critic = ActorCriticTwoLayerCNN(args).to(self.device)
+
+        if args.use_orthogonal_init:
+            self.actor_critic.apply(orthogonal_init)
 
         if self.set_adam_eps:
             self.optimizer = torch.optim.Adam(self.actor_critic.parameters(), lr=self.lr, eps=1e-5)
