@@ -16,8 +16,7 @@ The code of environments is from <https://github.com/eugenevinitsky/sequential_s
 
 ### `\ssd_pettingzoo`
 This folder includes tools for MeltingPot support as well as components for multithreading. 
-The environments themselves require the installation of [MeltingPot 2.0](https://github.com/google-deepmind/meltingpot). 
-The support tools are from https://github.com/rstrivedi/Melting-Pot-Contest-2023.
+The environments themselves require the installation of [MeltingPot 2.0](https://github.com/google-deepmind/meltingpot).
 
 ### `main_ppo_clean_up.py`
 This file hosts the implementation for training the classic CleanUp environment utilizing independent PPO.
@@ -38,4 +37,5 @@ Implementation of a vectorized experience replay buffer.
 Some utils.
 
 ## Acknowledgements
-This code extensively references the repository https://github.com/Lizhi-sjtu/MARL-code-pytorch.
+The implement of PPO references the repository https://github.com/Lizhi-sjtu/MARL-code-pytorch.
+The support tools of MeltingPot 2.0 are from https://github.com/rstrivedi/Melting-Pot-Contest-2023.

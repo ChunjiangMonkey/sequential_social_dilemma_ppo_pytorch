@@ -7,7 +7,7 @@ import numpy as np
 
 def save_img(rgb_arr, path, name):
     plt.imshow(rgb_arr, interpolation="nearest")
-    plt.savefig(path + name)
+    plt.savefig(os.path.join(path,name))
 
 
 def make_video_from_image_dir(vid_path, img_folder, video_name="trajectory", fps=5):
@@ -26,7 +26,7 @@ def make_video_from_image_dir(vid_path, img_folder, video_name="trajectory", fps
 
 
 def make_video_from_rgb_imgs(
-    rgb_arrs, vid_path, video_name="trajectory", fps=5, format="mp4v", resize=None
+        rgb_arrs, vid_path, video_name="trajectory", fps=5, format="mp4v", resize=None
 ):
     """
     Create a video from a list of rgb arrays
@@ -86,7 +86,7 @@ def return_view(grid, pos, row_size, col_size):
     pad_mat, left_pad, top_pad = pad_if_needed(left_edge, right_edge, top_edge, bot_edge, grid)
     x += left_pad
     y += top_pad
-    view = pad_mat[x - col_size : x + col_size + 1, y - row_size : y + row_size + 1]
+    view = pad_mat[x - col_size: x + col_size + 1, y - row_size: y + row_size + 1]
     return view
 
 

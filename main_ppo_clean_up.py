@@ -9,9 +9,9 @@ from matplotlib import pyplot as plt
 
 from normalization import Normalization, RewardScaling
 from ppo_agent import PPO_discrete
+from replaybuffer import VectorizedReplayBuffer
 from ssd_pettingzoo.clean_up import CleanupEnv
 from ssd_pettingzoo.vectorize_wrapper import SubprocVectorEnv
-from replaybuffer import VectorizedReplayBuffer
 
 
 def get_args():
@@ -49,7 +49,7 @@ def get_args():
     parser.add_argument("--entropy_coef", type=float, default=0.01, help="Trick: policy entropy")
     parser.add_argument("--use_lr_decay", type=bool, default=False, help="Trick:learning rate Decay")
     parser.add_argument("--use_grad_clip", type=bool, default=False, help="Trick: Gradient clip")
-    parser.add_argument("--use_orthogonal_init", type=bool, default=False, help="Trick: orthogonal initialization")
+    parser.add_argument("--use_orthogonal_init", type=bool, default=True, help="Trick: orthogonal initialization")
     parser.add_argument("--set_adam_eps", type=float, default=False, help="Trick: set Adam epsilon=1e-5")
     parser.add_argument("--use_tanh", type=float, default=False, help="Trick: tanh activation function")
     args = parser.parse_args()
@@ -168,7 +168,7 @@ class Runner:
         for step in range(self.args.train_inner_steps):
             self.total_steps += 1
             for agent_id in self.env.agents:
-                a, a_logprob = self.policies[agent_id].choose_action(obs_rgb[agent_id], evaluate=evaluate)
+                a, a_logprob = self.policies[agent_id].choose_action(obs_rgb[agent_id])
                 v = self.policies[agent_id].get_value(obs_rgb[agent_id])
                 actions[agent_id] = a
                 action_logprobs[agent_id] = a_logprob

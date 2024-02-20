@@ -188,21 +188,15 @@ class PPO_discrete:
         else:
             self.optimizer = torch.optim.Adam(self.actor_critic.parameters(), lr=self.lr)
 
-    def choose_action(self, obs, evaluate=False):
+    def choose_action(self, obs):
         obs = torch.tensor(obs, dtype=torch.float32).to(self.device)
         if obs.dim() != 4:
             obs = obs.unsqueeze(0)
-
-        prob = self.actor_critic.forward_a(obs)
         with torch.no_grad():
-            if evaluate:
-                a = prob.argmax(dim=-1)
-                return torch.squeeze(a).cpu().numpy()
-            else:
-                dist = Categorical(probs=self.actor_critic.forward_a(obs))
-                a = dist.sample()
-                a_logprob = dist.log_prob(a)
-                return torch.squeeze(a).cpu().numpy(), torch.squeeze(a_logprob).cpu().numpy()
+            dist = Categorical(probs=self.actor_critic.forward_a(obs))
+            a = dist.sample()
+            a_logprob = dist.log_prob(a)
+            return torch.squeeze(a).cpu().numpy(), torch.squeeze(a_logprob).cpu().numpy()
 
     def get_value(self, obs):
         obs = torch.tensor(obs, dtype=torch.float32).to(self.device)

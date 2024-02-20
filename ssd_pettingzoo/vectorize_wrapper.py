@@ -59,6 +59,10 @@ class DummyVectorEnv:
     def action_space(self):
         return self.envs[0].get_action_space()
 
+    def rgb_state(self, env_id):
+        rgb_state = self.envs[env_id].full_map_to_colors()
+        return rgb_state
+
     def close(self):
         for env in self.envs:
             env.close()
@@ -87,6 +91,9 @@ def _worker(env, env_id, conn):
                     env.seed(data)
                 else:
                     env.seed()
+            elif cmd == "rgb_state":
+                rgb_state = env.full_map_to_colors()
+                conn.send((env_id, rgb_state))
     except KeyboardInterrupt:
         conn.close()
 
@@ -154,7 +161,12 @@ class SubprocVectorEnv:
 
     def seed(self, seed=None):
         for conn in self.main_conns:
-            conn.send(("seed", seed))
+            try:
+                conn.send(("seed", seed))
+            except EOFError:
+                raise "step error!"
+            else:
+                pass
 
     @property
     def observation_space(self):
@@ -163,6 +175,15 @@ class SubprocVectorEnv:
     @property
     def action_space(self):
         return self.envs[0].get_action_space()
+
+    def rgb_state(self, env_id):
+        self.main_conns[env_id].send(("rgb_state", None))
+        try:
+            env_id, rgb_state = self.main_conns[env_id].recv()
+        except EOFError:
+            raise "step error!"
+        else:
+            return rgb_state
 
     def close(self):
         for conn in self.main_conns:
