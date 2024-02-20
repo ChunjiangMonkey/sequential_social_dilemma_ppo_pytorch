@@ -1,13 +1,37 @@
 import os
+import re
 
 import cv2
 import matplotlib.pyplot as plt
 import numpy as np
+from PIL import Image
 
 
 def save_img(rgb_arr, path, name):
     plt.imshow(rgb_arr, interpolation="nearest")
-    plt.savefig(os.path.join(path,name))
+    plt.savefig(os.path.join(path, name))
+
+
+def extract_number(filename):
+    match = re.search(r'_(\d+)\.png', filename)
+    if match:
+        return int(match.group(1))
+    return 0
+
+
+def make_gif_from_image_dir(img_folder, gif_name="trajectory"):
+    """
+    Create a gif from a directory of images
+    """
+    duration = 100
+    images = [img for img in os.listdir(img_folder) if img.endswith(".png")]
+    # images.sort()
+    images = sorted(images, key=extract_number)
+
+    gif_imgs = []
+    for i, image in enumerate(images):
+        gif_imgs.append(Image.open(os.path.join(img_folder, image)))
+    gif_imgs[0].save(os.path.join(img_folder, f'{duration}_{gif_name}.gif'), save_all=True, append_images=gif_imgs[1:], optimize=False, duration=duration, loop=0)
 
 
 def make_video_from_image_dir(vid_path, img_folder, video_name="trajectory", fps=5):
@@ -15,12 +39,17 @@ def make_video_from_image_dir(vid_path, img_folder, video_name="trajectory", fps
     Create a video from a directory of images
     """
     images = [img for img in os.listdir(img_folder) if img.endswith(".png")]
-    images.sort()
+    # images.sort()
+    images = sorted(images, key=extract_number)
+    print(images)
 
     rgb_imgs = []
+    gif_imgs = []
     for i, image in enumerate(images):
         img = cv2.imread(os.path.join(img_folder, image))
         rgb_imgs.append(img)
+        gif_imgs.append(Image.open(os.path.join(img_folder, image)))
+    gif_imgs[0].save(os.path.join(img_folder, f'{video_name}.gif'), save_all=True, append_images=gif_imgs[1:], optimize=False, duration=100, loop=0)
 
     make_video_from_rgb_imgs(rgb_imgs, vid_path, video_name=video_name, fps=fps)
 

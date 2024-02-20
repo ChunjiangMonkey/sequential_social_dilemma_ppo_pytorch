@@ -1,8 +1,12 @@
 # Sequential Social Dilemma with PPO Agents Based on PyTorch
 
-This repository contains benchmark code for (Sequential Social Dilemma) SSD training, offering support for both the [classic SSD environments ([CleanUp and Harvest](https://github.com/eugenevinitsky/sequential_social_dilemma_games)) and the [MeltingPot 2.0](https://github.com/google-deepmind/meltingpot) environments. 
+This repository contains benchmark code for Sequential Social Dilemma (SSD) training, offering support for both the classic SSD environments ([CleanUp and Harvest](https://github.com/eugenevinitsky/sequential_social_dilemma_games)) and the [MeltingPot 2.0](https://github.com/google-deepmind/meltingpot) environments. 
 It features comprehensive implementations encompassing the environment setup, PPO agent configuration, and an independent learning training workflow. 
 Designed with flexibility in mind, the codebase facilitates the use of both CNNs and RNNs, embraces multi-process sampling techniques, and integrates a variety of widely adopted tricks to enhance performance and efficiency.
+## Result
+Training five PPO agents with the collective reward leads to a clear emergence of division of labor and coordination.
+
+![gif of results](videos/100_trajectory.gif)
 
 ## Setup
 * **Python version**. If you don't use meltingpot, you can install `python 3.8` or newer.
@@ -38,4 +42,5 @@ Some utils.
 
 ## Acknowledgements
 The implement of PPO references the repository https://github.com/Lizhi-sjtu/MARL-code-pytorch.
+
 The support tools of MeltingPot 2.0 are from https://github.com/rstrivedi/Melting-Pot-Contest-2023.
