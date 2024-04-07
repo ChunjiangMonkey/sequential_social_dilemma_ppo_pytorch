@@ -138,6 +138,7 @@ class MapEnv(ParallelEnv):
         self.setup_agents()
         self.observation_spaces = {agent_id: self.__observation_space for agent_id in self.agents}
 
+
     def get_observation_space(self):
         obs_space = {
             "curr_obs": Box(
@@ -302,7 +303,8 @@ class MapEnv(ParallelEnv):
             dones[agent.agent_id] = agent.get_done()
 
             # infos[agent.agent_id] = agent.episode_infos
-            infos[agent.agent_id]["true_reward"] = rewards[agent.agent_id]
+            infos[agent.agent_id] = {}
+            infos[agent.agent_id]["reward"] = rewards[agent.agent_id]
 
         if self.use_collective_reward:
             collective_reward = sum(rewards.values())
@@ -373,6 +375,10 @@ class MapEnv(ParallelEnv):
     def custom_map_update(self):
         """Custom map updates that don't have to do with agents actions"""
         pass
+
+    def get_custom_infos(self):
+        """ get custom infos of environments"""
+        raise NotImplementedError
 
     def setup_agents(self):
         """Construct all the agents for the environment"""
@@ -941,6 +947,3 @@ class MapEnv(ParallelEnv):
             ],
             dtype=np.uint8,
         )
-
-    def get_custom_infos(self):
-        raise NotImplementedError

@@ -2,14 +2,13 @@ import numpy as np
 from gymnasium.spaces import Discrete
 from numpy.random import rand
 
-from ssd_pettingzoo.agent import CleanupAgent
-from ssd_pettingzoo.map_env import MapEnv
-from ssd_pettingzoo.maps import CLEANUP_MAP
+from envs.agent import CleanupAgent
+from envs.map_env import MapEnv
+from envs.maps import CLEANUP_MAP
 
 # Add custom actions to the agents
 # length of firing beam, length of cleanup beam
 _CLEANUP_ACTIONS = {"FIRE": 5, "CLEAN": 5}
-
 # Custom colour dictionary
 CLEANUP_COLORS = {
     b"C": np.array([100, 255, 255], dtype=np.uint8),  # Cyan cleaning beam
@@ -83,8 +82,9 @@ class CleanupEnv(MapEnv):
                     self.river_points.append([row, col])
         # print("..................")
         self.color_map.update(CLEANUP_COLORS)
+
         self.waste_density = 0
-        self.apple_num = 0
+        self.spawn_apple_num = 0
 
     def get_action_space(self):
         return Discrete(9)
@@ -159,8 +159,8 @@ class CleanupEnv(MapEnv):
         self.possible_agents = self.agents
 
     def spawn_apples_and_waste(self):
-        self.apple_num = 0
 
+        self.spawn_apple_num = 0
         spawn_points = []
         # spawn apples, multiple can spawn per step
         agent_positions = self.agent_pos
@@ -174,7 +174,8 @@ class CleanupEnv(MapEnv):
                 r += 1
                 if rand_num < self.current_apple_spawn_prob:
                     spawn_points.append((row, col, b"A"))
-                    self.apple_num += 1
+
+                    self.spawn_apple_num += 1
 
         # spawn one waste point, only one can spawn per step
         if not np.isclose(self.current_waste_spawn_prob, 0):
@@ -192,20 +193,18 @@ class CleanupEnv(MapEnv):
 
     def compute_probabilities(self):
         self.waste_density = 0
-        waste_density = 0
         if self.potential_waste_area > 0:
-            waste_density = 1 - self.compute_permitted_area() / self.potential_waste_area
-            self.waste_density = waste_density
+            self.waste_density = 1 - self.compute_permitted_area() / self.potential_waste_area
 
-        if waste_density >= thresholdDepletion:
+        if self.waste_density >= thresholdDepletion:
             self.current_apple_spawn_prob = 0
             self.current_waste_spawn_prob = 0
         else:
             self.current_waste_spawn_prob = wasteSpawnProbability
-            if waste_density <= thresholdRestoration:
+            if self.waste_density <= thresholdRestoration:
                 self.current_apple_spawn_prob = appleRespawnProbability
             else:
-                spawn_prob = (1 - (waste_density - thresholdRestoration) / (thresholdDepletion - thresholdRestoration)) * appleRespawnProbability
+                spawn_prob = (1 - (self.waste_density - thresholdRestoration) / (thresholdDepletion - thresholdRestoration)) * appleRespawnProbability
                 self.current_apple_spawn_prob = spawn_prob
 
     def compute_permitted_area(self):
@@ -217,4 +216,4 @@ class CleanupEnv(MapEnv):
         return free_area
 
     def get_custom_infos(self):
-        return {"apple_num": self.apple_num, "waste_density": self.waste_density}
+        return {"waste_density": self.waste_density, "spawn_apple_num": self.spawn_apple_num}

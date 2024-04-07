@@ -2,15 +2,14 @@ import numpy as np
 from gymnasium.spaces import Discrete
 from numpy.random import rand
 
-from ssd_pettingzoo.agent import HarvestAgent
-from ssd_pettingzoo.map_env import MapEnv
-from ssd_pettingzoo.maps import HARVEST_MAP
+from envs.agent import HarvestAgent
+from envs.map_env import MapEnv
+from envs.maps import HARVEST_MAP
 
 APPLE_RADIUS = 2
 
 # Add custom actions to the agents
 _HARVEST_ACTIONS = {"FIRE": 5}  # length of firing range
-
 SPAWN_PROB = [0, 0.005, 0.02, 0.05]
 
 HARVEST_VIEW_SIZE = 7
@@ -38,13 +37,14 @@ class HarvestEnv(MapEnv):
             alpha=alpha,
             beta=beta,
         )
+
         self.apple_points = []
         for row in range(self.base_map.shape[0]):
             for col in range(self.base_map.shape[1]):
                 if self.base_map[row, col] == b"A":
                     self.apple_points.append([row, col])
 
-        self.apple_num = 0
+        self.spawn_apple_num = 0
 
     def get_action_space(self):
         return Discrete(8)
@@ -94,7 +94,7 @@ class HarvestEnv(MapEnv):
         new_apple_points: list of 2-d lists
             a list containing lists indicating the spawn positions of new apples
         """
-        self.apple_num = 0
+        self.spawn_apple_num = 0
         new_apple_points = []
         agent_positions = self.agent_pos
         random_numbers = rand(len(self.apple_points))
@@ -120,7 +120,7 @@ class HarvestEnv(MapEnv):
                 r += 1
                 if rand_num < spawn_prob:
                     new_apple_points.append((row, col, b"A"))
-                    self.apple_num += 1
+                    self.spawn_apple_num += 1
 
         return new_apple_points
 
@@ -132,4 +132,4 @@ class HarvestEnv(MapEnv):
         return num_apples
 
     def get_custom_infos(self):
-        return {"apple_num": self.apple_num}
+        return {"spawn_apple_num": self.spawn_apple_num}

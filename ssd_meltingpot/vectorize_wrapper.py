@@ -3,7 +3,7 @@ import multiprocessing
 import numpy as np
 
 from ssd_meltingpot.substrate import env_creator
-from utils import to_mean_info_dict
+from env_utils import to_mean_info_dict
 
 
 class DummyVectorEnv:

@@ -1,4 +1,4 @@
-"""Shared utils for third-party library examples."""
+"""Shared env_utils for third-party library examples."""
 
 from collections.abc import Mapping, Sequence
 from typing import Any
@@ -99,7 +99,7 @@ def spec_to_space(spec: tree.Structure[dm_env.specs.Array]) -> spaces.Space:
 class DownSamplingSubstrateWrapper(observables.ObservableLab2dWrapper):
     """Downsamples 8x8 sprites returned by substrate to 1x1.
 
-    This related to the observation window of each agent and will lead to observation RGB shape to reduce
+    This related to the observation window of each agents and will lead to observation RGB shape to reduce
     from [88, 88, 3] to [11, 11, 3]. Other downsampling scales are allowed but not tested. This will lead
     to significant speedups in training.
     """

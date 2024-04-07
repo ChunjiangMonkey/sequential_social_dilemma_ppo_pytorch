@@ -2,21 +2,48 @@ import multiprocessing
 
 import numpy as np
 
-from env_utils import to_mean_info_dict
+from env_utils.dict_utils import info_dict_list_to_mean_info_dict
 
 
-class DummyVectorEnv:
-    # Vectorized environment based on loop
+class EnvVectorWrapper:
     def __init__(self, envs):
         self.envs = envs
-        self.env_num = len(self.envs)
+        self.env_num = len(envs)
         self.agents = self.envs[0].agents
         self.obs_keys = [key for key in self.observation_space.keys()]
 
     def reset(self):
-        observations = {
-            agent_id: {key: np.zeros((self.env_num, *self.observation_space[key].shape)) for key in self.obs_keys} for
-            agent_id in self.agents}
+        raise NotImplementedError
+
+    def step(self, actions):
+        raise NotImplementedError
+
+    def seed(self, seed=None):
+        raise NotImplementedError
+
+    def close(self):
+        raise NotImplementedError
+
+    @property
+    def observation_space(self):
+        return self.envs[0].get_observation_space()
+
+    @property
+    def action_space(self):
+        return self.envs[0].get_action_space()
+
+    def rgb_state(self, env_id):
+        raise NotImplementedError
+
+    @property
+    def info_names(self):
+        return list(self.envs[0].get_custom_infos().keys())
+
+
+class DummyVectorWrapper(EnvVectorWrapper):
+    # Vectorized environment based on loop
+    def reset(self):
+        observations = {agent_id: {key: np.zeros((self.env_num, *self.observation_space[key].shape)) for key in self.obs_keys} for agent_id in self.agents}
         for i, env in enumerate(self.envs):
             obs = env.reset()
             for agent_id in self.agents:
@@ -29,9 +56,7 @@ class DummyVectorEnv:
             env.seed(seed)
 
     def step(self, actions):
-        observations = {
-            agent_id: {key: np.zeros((self.env_num, *self.observation_space[key].shape)) for key in self.obs_keys} for
-            agent_id in self.agents}
+        observations = {agent_id: {key: np.zeros((self.env_num, *self.observation_space[key].shape)) for key in self.obs_keys} for agent_id in self.agents}
         rewards = {agent_id: np.zeros(self.env_num) for agent_id in self.agents}
         dones = {agent_id: np.zeros(self.env_num) for agent_id in self.agents}
         infos = []
@@ -48,16 +73,8 @@ class DummyVectorEnv:
                 dones[agent_id][i] = done[agent_id]
                 infos.append(info)
 
-        infos = to_mean_info_dict(infos)
+        infos = info_dict_list_to_mean_info_dict(infos)
         return observations, rewards, dones, infos
-
-    @property
-    def observation_space(self):
-        return self.envs[0].get_observation_space()
-
-    @property
-    def action_space(self):
-        return self.envs[0].get_action_space()
 
     def rgb_state(self, env_id):
         rgb_state = self.envs[env_id].full_map_to_colors()
@@ -98,13 +115,10 @@ def _worker(env, env_id, conn):
         conn.close()
 
 
-class SubprocVectorEnv:
+class SubprocVectorWrapper(EnvVectorWrapper):
     # Vectorized environment based on multiprocess
     def __init__(self, envs):
-        self.envs = envs
-        self.env_num = len(self.envs)
-        self.agents = self.envs[0].agents
-        self.obs_keys = [key for key in self.observation_space.keys()]
+        super().__init__(envs)
         self.processes = []
         self.main_conns = []
         self.sub_conns = []
@@ -117,7 +131,6 @@ class SubprocVectorEnv:
 
     def reset(self):
         observations = {agent_id: {key: np.zeros((self.env_num, *self.observation_space[key].shape)) for key in self.obs_keys} for agent_id in self.agents}
-
         for conn in self.main_conns:
             conn.send(("reset", None))
         for conn in self.main_conns:
@@ -155,8 +168,8 @@ class SubprocVectorEnv:
                         observations[agent_id][key][env_id] = obs[agent_id][key]
                     rewards[agent_id][env_id] = reward[agent_id]
                     dones[agent_id][env_id] = done[agent_id]
-                    infos.append(info)
-        infos = to_mean_info_dict(infos)
+                infos.append(info)
+        infos = info_dict_list_to_mean_info_dict(infos)
         return observations, rewards, dones, infos
 
     def seed(self, seed=None):
@@ -167,14 +180,6 @@ class SubprocVectorEnv:
                 raise "step error!"
             else:
                 pass
-
-    @property
-    def observation_space(self):
-        return self.envs[0].get_observation_space()
-
-    @property
-    def action_space(self):
-        return self.envs[0].get_action_space()
 
     def rgb_state(self, env_id):
         self.main_conns[env_id].send(("rgb_state", None))

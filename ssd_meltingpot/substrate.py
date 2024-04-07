@@ -5,7 +5,7 @@ from meltingpot import substrate
 from ml_collections import config_dict
 from ray.rllib.env import multi_agent_env
 
-# import ppo.meltingpot_env.utils as utils
+# import ppo.meltingpot_env.env_utils as env_utils
 from ssd_meltingpot.meltingpot_utils import DownSamplingSubstrateWrapper
 import ssd_meltingpot.meltingpot_utils as utils
 PLAYER_STR_FORMAT = 'player_{index}'

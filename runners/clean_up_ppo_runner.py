@@ -1,17 +1,14 @@
 import os
 
-import numpy as np
 import setproctitle
 import tqdm
 import wandb
-from matplotlib import pyplot as plt
 
+from agents.normalization import Normalization, RewardScaling
 from agents.ppo_agent import PPO_discrete
 from agents.replaybuffer import VectorizedReplayBuffer
-from args import get_args
 from envs.clean_up import CleanupEnv
 from envs.env_wrapper import SubprocVectorWrapper
-from normalization import Normalization, RewardScaling
 
 
 class Runner:
@@ -20,8 +17,7 @@ class Runner:
         setproctitle.setproctitle(f"{self.args.exp_name}")
 
         env = [CleanupEnv(use_collective_reward=args.use_collective_reward,
-                          inequity_averse_reward=args.use_inequity_averse_reward) for _ in
-               range(args.env_parallel_num)]
+                          inequity_averse_reward=args.use_inequity_averse_reward) for _ in range(args.env_parallel_num)]
         self.env = SubprocVectorWrapper(env)
 
         self.args.input_h, self.args.input_w, self.args.input_c = self.env.observation_space["curr_obs"].shape
@@ -29,6 +25,7 @@ class Runner:
 
         self.policies = {agent_id: PPO_discrete(args) for agent_id in self.env.agents}
         self.replay_buffers = {agent_id: VectorizedReplayBuffer(args) for agent_id in self.env.agents}
+        self.data_collector = None
 
         # checkpoints folder
         self.checkpoint_path = os.path.join("checkpoints", args.exp_name)
@@ -36,7 +33,6 @@ class Runner:
 
         if args.use_wandb:
             self.init_wandb()
-
         if args.use_state_norm:
             self.state_norm = Normalization(shape=(args.env_parallel_num, args.input_c, args.input_h, args.input_w))
         if args.use_reward_scaling:
@@ -44,21 +40,9 @@ class Runner:
 
         self.total_steps = 0
 
-        # true reward without any shaping
-        self.returns = {agent_id: [] for agent_id in self.env.agents}
-        # the number of collected apples
-        self.collected_apple_nums = {agent_id: [] for agent_id in self.env.agents}
-        # the number of clean action
-        self.clean_nums = {agent_id: [] for agent_id in self.env.agents}
-        # the number of fire action
-        self.fire_nums = {agent_id: [] for agent_id in self.env.agents}
-        # mean apple num
-        self.env_apple_nums = []
-        # mean waste density
-        self.env_waste_densities = []
-
     def init_wandb(self):
         # replace with your own wandb key
+        os.environ['WANDB_API_KEY'] = self.args.wandb_api_key
         wandb_config = {keys: value for keys, value in self.args.__dict__.items()}
         wandb.init(project='ssd_prosocial_baseline', name=self.args.exp_name, config=wandb_config)
 
@@ -79,25 +63,8 @@ class Runner:
             env_apple_num = env_apple_num / self.args.train_inner_steps
             env_waste_density = env_waste_density / self.args.train_inner_steps
             if self.args.use_wandb:
-                log_dict = {}
-                for agent_id in self.env.agents:
-                    log_dict[f"return_{agent_id}"] = episode_returns[agent_id]
-                    log_dict[f"collected_apple_num_{agent_id}"] = infos[agent_id]["collected_apple_num"]
-                    log_dict[f"fire_num_{agent_id}"] = infos[agent_id]["fire_num"]
-                    log_dict[f"clean_num_{agent_id}"] = infos[agent_id]["clean_num"]
-                log_dict["env_apple_num"] = env_apple_num
-                log_dict["env_waste_density"] = env_waste_density
+                log_dict = self.data_collector.info_episode
                 wandb.log(log_dict)
-
-            for agent_id in self.env.agents:
-                self.collected_apple_nums[agent_id].append(infos[agent_id]["collected_apple_num"])
-                self.fire_nums[agent_id].append(infos[agent_id]["fire_num"])
-                self.clean_nums[agent_id].append(infos[agent_id]["clean_num"])
-                self.returns[agent_id].append(episode_returns[agent_id])
-            self.env_apple_nums.append(env_apple_num)
-            self.env_waste_densities.append(env_waste_density)
-
-        return self.returns, self.collected_apple_nums
 
     def run_episode(self, evaluate=False):
         actions = {}
@@ -122,8 +89,9 @@ class Runner:
                 obs_rgb[agent_id] = self.state_norm(obs_rgb[agent_id])
             if self.args.use_reward_scaling:
                 self.reward_scaling.reset()
-
-        for step in range(self.args.train_inner_steps):
+        step = 0
+        while step < self.args.train_inner_steps:
+            # for step in range(self.args.train_inner_steps):
             self.total_steps += 1
             for agent_id in self.env.agents:
                 a, a_logprob = self.policies[agent_id].choose_action(obs_rgb[agent_id])
@@ -145,7 +113,6 @@ class Runner:
                 if not evaluate:
                     if self.args.use_reward_scaling:
                         rewards[agent_id] = self.reward_scaling(rewards[agent_id])
-
                     self.replay_buffers[agent_id].store_transition(step, obs_rgb[agent_id],
                                                                    values[agent_id],
                                                                    actions[agent_id],
@@ -156,21 +123,8 @@ class Runner:
                 episode_returns[agent_id] += infos[agent_id]["reward"]
             env_apple_num += infos["apple_num"]
             env_waste_density += infos["waste_density"]
-
+            step += 1
         for agent_id in self.env.agents:
             v = self.policies[agent_id].get_value(obs_rgb[agent_id])
             self.replay_buffers[agent_id].store_last_value(step + 1, v)
         return episode_returns, env_apple_num, env_waste_density, infos
-
-
-if __name__ == '__main__':
-    args = get_args()
-    runner = Runner(args)
-    return_list, collected_apple_nums = runner.train()
-    for key in return_list.keys():
-        return_list[key] = np.array(return_list[key])
-        collected_apple_nums[key] = np.array(collected_apple_nums[key])
-        plt.plot(return_list[key])
-        plt.show()
-        plt.plot(collected_apple_nums[key])
-        plt.show()
