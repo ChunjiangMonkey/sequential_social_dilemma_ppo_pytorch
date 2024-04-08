@@ -10,6 +10,7 @@ from PIL import Image
 def save_img(rgb_arr, path, name):
     plt.imshow(rgb_arr, interpolation="nearest")
     plt.savefig(os.path.join(path, name))
+    plt.close()
 
 
 def extract_number(filename):
@@ -30,7 +31,8 @@ def make_gif_from_image_dir(img_folder, gif_name="trajectory"):
 
     gif_imgs = []
     for i, image in enumerate(images):
-        gif_imgs.append(Image.open(os.path.join(img_folder, image)))
+        with Image.open(os.path.join(img_folder, image)) as img:
+            gif_imgs.append(img.copy())
     gif_imgs[0].save(os.path.join(img_folder, f'{duration}_{gif_name}.gif'), save_all=True, append_images=gif_imgs[1:], optimize=False, duration=duration, loop=0)
 
 

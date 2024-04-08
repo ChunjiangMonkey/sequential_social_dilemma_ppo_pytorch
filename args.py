@@ -13,7 +13,7 @@ def get_args():
 
     # Training arguments
     parser.add_argument("--train_episode", type=int, default=4, help=" Maximum number of training episode")
-    parser.add_argument("--train_inner_steps", type=int, default=512, help=" Maximum number of steps per episode")
+    parser.add_argument("--train_inner_steps", type=int, default=512, help=" Maximum number of steps per training episode")
     parser.add_argument("--save_freq", type=int, default=128, help="The number of episodes per saving")
     parser.add_argument("--batch_size", type=int, default=2, help="The number of episodes for sampling for one training")
     parser.add_argument("--mini_batch_size", type=int, default=1, help="The number of episodes used for one training epoch")
@@ -23,7 +23,14 @@ def get_args():
     parser.add_argument("--epsilon", type=float, default=0.2, help="PPO clip parameter")
     parser.add_argument("--K_epochs", type=int, default=16, help="The number of update for one training")
 
-    #
+    # Evaluation arguments
+    parser.add_argument("--evaluate_model_name", type=str, default=512, help=" Maximum number of steps per evaluation episode")
+    parser.add_argument("--evaluate_inner_steps", type=int, default=512, help=" Maximum number of steps per evaluation episode")
+
+    # File arguments
+    parser.add_argument("--img_dir", type=str, default="img", help="Folder to save images")
+    parser.add_argument("--save_csv", default=True, help="Folder to save images")
+    parser.add_argument("--csv_dir", type=str, default="csv", help="Folder to save csv files")
 
     # Environment arguments
     parser.add_argument("--use_rgb_norm", type=bool, default=True, help="map 0-255 to 0-1")

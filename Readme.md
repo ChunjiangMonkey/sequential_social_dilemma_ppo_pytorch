@@ -6,7 +6,7 @@ Designed with flexibility in mind, the codebase facilitates the use of both CNNs
 ## Result
 Training five PPO agents with the collective reward leads to a clear emergence of division of labor and coordination.
 
-![gif of results](videos/100_trajectory.gif)
+![gif of results](videos/100_new.gif)
 
 ## Setup
 * **Python version**. If you don't use meltingpot, you can install `python 3.8` or newer.

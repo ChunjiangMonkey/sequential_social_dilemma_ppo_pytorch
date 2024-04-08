@@ -1,3 +1,5 @@
+import os
+
 import numpy as np
 
 from env_utils.dict_utils import create_dict_with_same_keys, reset_dict
@@ -32,9 +34,11 @@ class DataCollector:
         for key in self._info_episode.keys():
             if isinstance(self._info_episode[key], dict):
                 for sub_key in self._info_episode[key].keys():
+                    # sum agent data
                     self._info_episode[key][sub_key].append(np.sum(self._info_step[key][sub_key]))
                     self._info_step[key][sub_key] = []
             else:
+                # mean env data
                 self._info_episode[key].append(np.mean(self._info_step[key]))
                 self._info_step[key] = []
         self.episode += 1
@@ -46,10 +50,10 @@ class DataCollector:
             # for agent data
             if isinstance(self._info_episode[key], dict):
                 for sub_key in self._info_episode[key].keys():
-                    info_dict[f"{key}_{sub_key}"] = self._info_episode[key][sub_key][self.episode - 1]
+                    info_dict[f"{key}_{sub_key}"] = self._info_episode[key][sub_key][-1]
             # for env data
             else:
-                info_dict[key] = self._info_episode[key][self.episode - 1]
+                info_dict[key] = self._info_episode[key][-1]
         return info_dict
 
     @property
@@ -59,12 +63,16 @@ class DataCollector:
             # for agent data
             if isinstance(self._info_episode[key], dict):
                 for sub_key in self._info_episode[key].keys():
-                    info_dict[f"{key}_{sub_key}"] = self._info_episode[key][sub_key][self.episode]
-                    self._info_episode[key][sub_key] = []
+                    info_dict[f"{key}_{sub_key}"] = self._info_episode[key][sub_key]
             # for env data
             else:
-                info_dict[key] = self._info_episode[key][self.episode]
+                info_dict[key] = self._info_episode[key]
         return info_dict
+
+    def save_to_csv(self, path):
+        for key in self.info_all_episode:
+            print(self.info_all_episode[key])
+            np.savetxt(os.path.join(path, f"{key}.csv"), self.info_all_episode[key], delimiter='\n', fmt='%d')
 
     def clear(self):
         self.episode = 0
