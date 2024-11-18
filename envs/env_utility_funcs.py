@@ -10,7 +10,6 @@ from PIL import Image
 def save_img(rgb_arr, path, name):
     plt.imshow(rgb_arr, interpolation="nearest")
     plt.savefig(os.path.join(path, name))
-    plt.close()
 
 
 def extract_number(filename):

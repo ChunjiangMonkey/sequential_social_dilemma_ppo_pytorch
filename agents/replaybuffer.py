@@ -100,12 +100,9 @@ class ReplayBuffer:
         batch = {}
         for key in self.buffer.keys():
             if key == 'a':
-                batch[key] = torch.tensor(self.buffer[key][:, :self.train_inner_steps], dtype=torch.long).to(
-                    self.device)
+                batch[key] = torch.tensor(self.buffer[key][:, :self.train_inner_steps], dtype=torch.long).to(self.device)
             elif key == 'v':
-                batch[key] = torch.tensor(self.buffer[key][:, :self.train_inner_steps + 1], dtype=torch.float32).to(
-                    self.device)
+                batch[key] = torch.tensor(self.buffer[key][:, :self.train_inner_steps + 1], dtype=torch.float32).to(self.device)
             else:
-                batch[key] = torch.tensor(self.buffer[key][:, :self.train_inner_steps], dtype=torch.float32).to(
-                    self.device)
+                batch[key] = torch.tensor(self.buffer[key][:, :self.train_inner_steps], dtype=torch.float32).to(self.device)
         return batch

@@ -15,21 +15,8 @@ BASE_ACTIONS = {
     6: "TURN_COUNTERCLOCKWISE",
 }  # Rotate clockwise
 
-'''
-123
-'''
-
-
 class Agent(object):
     def __init__(self, agent_id, start_pos, start_orientation, full_map, row_size, col_size):
-
-        """
-        123
-        """
-        '''
-        123
-        '''
-        # 123
         self.agent_id = agent_id
         self.pos = np.array(start_pos)
         self.orientation = start_orientation
@@ -38,8 +25,6 @@ class Agent(object):
         self.col_size = col_size
         self.reward_this_turn = 0
         self.prev_visible_agents = None
-
-        self.episode_infos = None
 
     @property
     def action_space(self):
@@ -162,7 +147,6 @@ class CleanupAgent(Agent):
         # remember what you've stepped on
         self.update_agent_pos(start_pos)
         self.update_agent_rot(start_orientation)
-        self.episode_infos = {"collected_apple_num": 0, "clean_num": 0, "fire_num": 0}
 
     # Ugh, this is gross, this leads to the actions basically being
     # defined in two places
@@ -173,9 +157,6 @@ class CleanupAgent(Agent):
     def fire_beam(self, char):
         if char == b"F":
             self.reward_this_turn -= 1
-            self.episode_infos["fire_num"] += 1
-        elif char == b"C":
-            self.episode_infos["clean_num"] += 1
 
     def get_done(self):
         return False
@@ -188,7 +169,6 @@ class CleanupAgent(Agent):
         """Defines how an agents interacts with the char it is standing on"""
         if char == b"A":
             self.reward_this_turn += 1
-            self.episode_infos["collected_apple_num"] += 1
             return b" "
         else:
             return char
@@ -204,7 +184,6 @@ class HarvestAgent(Agent):
         super().__init__(agent_id, start_pos, start_orientation, full_map, view_len, view_len)
         self.update_agent_pos(start_pos)
         self.update_agent_rot(start_orientation)
-        self.episode_infos = {"collected_apple_num": 0, "fire_num": 0}
 
     # Ugh, this is gross, this leads to the actions basically being
     # defined in two places
@@ -219,7 +198,6 @@ class HarvestAgent(Agent):
     def fire_beam(self, char):
         if char == b"F":
             self.reward_this_turn -= 1
-            self.episode_infos["fire_num"] += 1
 
     def get_done(self):
         return False
@@ -228,7 +206,6 @@ class HarvestAgent(Agent):
         """Defines how an agents interacts with the char it is standing on"""
         if char == b"A":
             self.reward_this_turn += 1
-            self.episode_infos["collected_apple_num"] += 1
             return b" "
         else:
             return char
